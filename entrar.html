@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar - Using</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/config.js"></script>
+  <style>
+    .auth-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .auth-box {
+      width: 100%;
+      max-width: 400px;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .auth-title {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      color: var(--text-main);
+      text-align: center;
+    }
+    .auth-subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--text-muted);
+    }
+    .form-input {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: var(--brand-color);
+    }
+    .error-msg {
+      background-color: rgba(229, 115, 115, 0.1);
+      border: 1px solid var(--danger-color);
+      color: var(--danger-color);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+      display: none;
+    }
+  </style>
+</head>
+<body class="auth-container">
+
+  <div class="auth-box">
+    <h1 class="auth-title">Using</h1>
+    <p class="auth-subtitle">Painel Administrativo para Barbearias</p>
+
+    <div id="errorAlert" class="error-msg"></div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label class="form-label" for="email">E-mail</label>
+        <input type="email" id="email" class="form-input" required placeholder="seu@email.com">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="senha">Palavra-passe (Senha)</label>
+        <input type="password" id="senha" class="form-input" required placeholder="••••••••">
+      </div>
+
+      <button type="submit" class="btn-primary" style="margin-top: 8px;">Entrar no Painel</button>
+    </form>
+  </div>
+
+  <script>
+    const loginForm = document.getElementById('loginForm');
+    const errorAlert = document.getElementById('errorAlert');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorAlert.style.display = 'none';
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('senha').value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      if (error) {
+        errorAlert.textContent = 'Erro ao entrar: ' + error.message;
+        errorAlert.style.display = 'block';
+      } else {
+        window.location.href = '/painel.html';
+      }
+    });
+  </script>
+</body>
+</html>
