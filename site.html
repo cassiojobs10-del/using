@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Using - Carregando...</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/config.js"></script>
+  <style>
+    .site-header { text-align: center; padding: 30px 16px; background-size: cover; background-position: center; position: relative; border-bottom: 1px solid var(--border-color); }
+    .site-header::after { content: ''; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(18, 17, 16, 0.85); z-index: 1; }
+    .site-header > * { position: relative; z-index: 2; }
+    .avatar-logo { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 2px solid var(--brand-color); margin: 0 auto 12px auto; display: flex; align-items: center; justify-content: center; background: var(--bg-card); font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; color: var(--brand-color); }
+    .site-title { font-size: 2rem; margin-bottom: 4px; color: var(--text-main); }
+    .site-frase { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px; }
+    .header-btns { display: flex; gap: 10px; justify-content: center; }
+    .btn-outline { background: transparent; border: 1px solid var(--brand-color); color: var(--brand-color); padding: 10px 16px; border-radius: 8px; font-weight: 700; text-transform: uppercase; font-family: 'Barlow Condensed', sans-serif; cursor: pointer; text-decoration: none; display: inline-block; }
+    .section-title { font-size: 1.3rem; margin-bottom: 12px; color: var(--text-main); border-left: 3px solid var(--brand-color); padding-left: 8px; }
+    .info-grid { display: grid; gap: 10px; margin-bottom: 20px; }
+    .info-card { display: flex; align-items: center; gap: 12px; background: var(--bg-card); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.9rem; }
+    .service-item, .plan-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 8px; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .gallery-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; padding: 8px; text-align: center; }
+    .gallery-card img { width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; }
+    .form-agendamento { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+  <div id="loadingView" class="container" style="text-align: center; padding-top: 100px;">
+    <p style="color: var(--text-muted);">A carregar barbearia...</p>
+  </div>
+
+  <div id="mainView" style="display: none; padding-bottom: 50px;">
+    <!-- CABEÇALHO -->
+    <div class="site-header" id="headerBg">
+      <div id="logoContainer" class="avatar-logo">US</div>
+      <h1 class="site-title" id="barbNome">Barbearia</h1>
+      <p class="site-frase" id="barbFrase">O melhor estilo para si.</p>
+      <div class="header-btns">
+        <a href="#agendamento" class="btn-primary" style="width: auto; padding: 10px 20px;">Agende seu horário</a>
+        <a id="btnFaleConosco" href="#" target="_blank" class="btn-outline">Fale conosco</a>
+      </div>
+    </div>
+
+    <div class="container">
+      <!-- CARTÕES DE CONTATO/HORÁRIO -->
+      <div class="info-grid" style="margin-top: 20px;">
+        <div class="info-card">
+          <span>📍</span>
+          <div>
+            <strong>Endereço</strong>
+            <p id="infoEndereco" style="color: var(--text-muted);">-</p>
+          </div>
+        </div>
+        <div class="info-card">
+          <span>🕒</span>
+          <div>
+            <strong>Horário</strong>
+            <p id="infoHorario" style="color: var(--text-muted);">-</p>
+          </div>
+        </div>
+        <div class="info-card">
+          <span>📞</span>
+          <div>
+            <strong>Contato & Pix</strong>
+            <p id="infoContato" style="color: var(--text-muted);">-</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SOBRE -->
+      <div id="sobreSecao" style="display: none; margin-bottom: 24px;">
+        <h2 class="section-title" id="sobreTitulo">Sobre Nós</h2>
+        <div class="card">
+          <img id="sobreFoto" src="" style="width: 1005; height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 12px; display: none;">
+          <p id="sobreTexto" style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;"></p>
+        </div>
+      </div>
+
+      <!-- SERVIÇOS -->
+      <div style="margin-bottom: 24px;">
+        <h2 class="section-title">Serviços e Preços</h2>
+        <div id="listaServicosPublicos"></div>
+      </div>
+
+      <!-- GALERIA DE CORTES -->
+      <div style="margin-bottom: 24px;">
+        <h2 class="section-title">Galeria de Cortes</h2>
+        <div id="listaGaleriaPublica"></div>
+      </div>
+
+      <!-- PLANOS DO CLUBE -->
+      <div id="planosSecao" style="display: none; margin-bottom: 24px;">
+        <h2 class="section-title">Clube de Assinatura</h2>
+        <div id="listaPlanosPublicos"></div>
+      </div>
+
+      <!-- MOTOR DE AGENDAMENTO -->
+      <div id="agendamento" class="form-agendamento">
+        <h2 class="section-title" style="margin-bottom: 16px;">Faça seu Agendamento</h2>
+        <form id="formAgendar">
+          <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Profissional</label>
+          <select id="agendProfissional" required>
+            <option value="">Selecione o profissional</option>
+            <option value="sem_pref">Sem preferência (Primeiro livre)</option>
+          </select>
+
+          <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 4px; margin-top: 12px;">Serviços (Selecione um ou mais)</label>
+          <div id="agendServicos" style="margin-bottom: 12px; max-height: 160px; overflow-y: auto; border: 1px solid var(--border-color); padding: 8px; border-radius: 8px; background: var(--bg-main);"></div>
+
+          <div id="divDomicilio" style="display: none; margin-bottom: 12px; background: var(--bg-main); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Local do Atendimento</label>
+            <select id="agendLocal">
+              <option value="barbearia">Na Barbearia</option>
+              <option value="domicilio">Em Domicílio (+ Taxa)</option>
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div>
+              <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Data</label>
+              <input type="date" id="agendData" required style="width: 100%; padding: 10px; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main);">
+            </div>
+            <div>
+              <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Horário Livre</label>
+              <select id="agendHorario" required>
+                <option value="">Escolha a data primeiro</option>
+              </select>
+            </div>
+          </div>
+
+          <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Seu Nome</label>
+          <input type="text" id="agendNome" required placeholder="Ex: João Silva" style="width: 100%; padding: 10px; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); margin-bottom: 12px;">
+
+          <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Seu WhatsApp (com DDD)</label>
+          <input type="text" id="agendWhatsapp" required placeholder="Ex: 11999999999" style="width: 100%; padding: 10px; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); margin-bottom: 16px;">
+
+          <button type="submit" class="btn-primary">Confirmar Agendamento</button>
+        </form>
+
+        <!-- SUCESSO AGENDAMENTO -->
+        <div id="sucessoAgendamento" style="display: none; text-align: center; padding: 20px;">
+          <h3 style="color: var(--success-color); margin-bottom: 8px;">Agendamento Realizado!</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">Clique no botão abaixo para enviar a confirmação direto no WhatsApp da barbearia.</p>
+          <a id="linkEnviarZap" href="#" target="_blank" class="btn-primary" style="background-color: #25D366; color: white; text-decoration: none;">Enviar confirmação no WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/site.js"></script>
+</body>
+</html>
