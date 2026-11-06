@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel do Dono - Using</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/config.js"></script>
+  <style>
+    .panel-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+    .panel-title { font-size: 1.5rem; color: var(--text-main); }
+    .btn-logout { background: transparent; border: 1px solid var(--danger-color); color: var(--danger-color); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
+    .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; }
+    .tab-btn { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 16px; border-radius: 8px; cursor: pointer; white-space: nowrap; font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; font-size: 1rem; }
+    .tab-btn.active { background: var(--brand-color); color: #121110; border-color: var(--brand-color); font-weight: 700; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; text-align: center; }
+    .stat-value { font-family: 'IBM Plex Mono', monospace; font-size: 1.2rem; color: var(--brand-color); font-weight: 600; }
+    .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+    .form-grid { display: grid; gap: 12px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
+    input, select, textarea { width: 100%; padding: 10px; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); margin-bottom: 12px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+    th { color: var(--text-muted); font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; }
+    .badge-pendente { background: rgba(201, 154, 75, 0.2); color: var(--brand-color); }
+    .badge-pago { background: rgba(129, 199, 132, 0.2); color: var(--success-color); }
+    .badge-cancelado { background: rgba(229, 115, 115, 0.2); color: var(--danger-color); }
+    .action-btns { display: flex; gap: 6px; }
+    .btn-sm { padding: 6px 10px; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-block; text-align: center; }
+    .btn-success { background: var(--success-color); color: #121110; }
+    .btn-danger { background: var(--danger-color); color: #121110; }
+    .btn-whatsapp { background: #25D366; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="container" style="max-width: 600px;">
+    <div class="panel-header">
+      <div>
+        <h1 class="panel-title" id="barbeariaNome">Painel Using</h1>
+        <p style="font-size: 0.85rem; color: var(--text-muted);" id="barbeariaSlug">Carregando...</p>
+      </div>
+      <button class="btn-logout" id="logoutBtn">Sair</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="agenda">Agenda</button>
+      <button class="tab-btn" data-tab="servicos">Serviços</button>
+      <button class="tab-btn" data-tab="equipe">Equipe</button>
+      <button class="tab-btn" data-tab="galeria">Galeria</button>
+      <button class="tab-btn" data-tab="planos">Planos</button>
+      <button class="tab-btn" data-tab="config">Configurações</button>
+    </div>
+
+    <!-- TAB AGENDA -->
+    <div id="tab-agenda" class="tab-content active">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">Recebido</div>
+          <div class="stat-value" id="statRecebido">R$ 0,00</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">A Receber</div>
+          <div class="stat-value" id="statAReceber">R$ 0,00</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Próximos</div>
+          <div class="stat-value" id="statProximos">0</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom: 12px;">Filtros e Atendimentos</h3>
+        <div style="margin-bottom: 12px;">
+          <label for="filtroProfissional">Filtrar por Profissional</label>
+          <select id="filtroProfissional">
+            <option value="">Todos os profissionais</option>
+          </select>
+        </div>
+        <div style="overflow-x: auto;">
+          <table id="tabelaAgendamentos">
+            <thead>
+              <tr>
+                <th>Data/Hora</th>
+                <th>Cliente</th>
+                <th>Serviço/Prof.</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="listaAgendamentos">
+              <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Carregando agendamentos...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB SERVIÇOS -->
+    <div id="tab-servicos" class="tab-content">
+      <div class="card">
+        <h3 style="margin-bottom: 12px;">Adicionar Novo Serviço</h3>
+        <form id="formServico">
+          <label>Nome do Serviço</label>
+          <input type="text" id="servicoNome" required placeholder="Ex: Corte Degradê">
+          <div class="form-row">
+            <div>
+              <label>Preço (R$)</label>
+              <input type="number" step="0.01" id="servicoPreco" required placeholder="40.00">
+            </div>
+            <div>
+              <label>Duração (minutos)</label>
+              <input type="number" id="servicoDuracao" value="30" required>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary">Adicionar Serviço</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>Serviços Cadastrados</h3>
+        <div id="listaServicos">Carregando...</div>
+      </div>
+    </div>
+
+    <!-- TAB EQUIPE -->
+    <div id="tab-equipe" class="tab-content">
+      <div class="card">
+        <h3 style="margin-bottom: 12px;">Adicionar Profissional</h3>
+        <form id="formProfissional">
+          <label>Nome do Profissional</label>
+          <input type="text" id="profNome" required placeholder="Ex: Carlos Barbeiro">
+          <div class="form-row">
+            <div>
+              <label>Início do Expediente</label>
+              <input type="time" id="profInicio" value="09:00" required>
+            </div>
+            <div>
+              <label>Fim do Expediente</label>
+              <input type="time" id="profFim" value="19:00" required>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary">Adicionar Profissional</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>Equipe Cadastrada</h3>
+        <div id="listaProfissionais">Carregando...</div>
+      </div>
+    </div>
+
+    <!-- TAB GALERIA -->
+    <div id="tab-galeria" class="tab-content">
+      <div class="card">
+        <h3 style="margin-bottom: 12px;">Adicionar Corte à Galeria</h3>
+        <form id="formGaleria">
+          <label>URL da Foto (ou link de imagem)</label>
+          <input type="url" id="galeriaFoto" required placeholder="https://exemplo.com/foto.jpg">
+          <label>Vincular a Serviço (Opcional)</label>
+          <select id="galeriaServico">
+            <option value="">Nenhum serviço vinculado</option>
+          </select>
+          <button type="submit" class="btn-primary">Adicionar Foto</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>Fotos na Galeria</h3>
+        <div id="listaGaleria">Carregando...</div>
+      </div>
+    </div>
+
+    <!-- TAB PLANOS -->
+    <div id="tab-planos" class="tab-content">
+      <div class="card">
+        <h3 style="margin-bottom: 12px;">Adicionar Plano do Clube</h3>
+        <form id="formPlano">
+          <label>Nome do Plano</label>
+          <input type="text" id="planoNome" required placeholder="Ex: Clube VIP Ilimitado">
+          <label>Descrição</label>
+          <textarea id="planoDesc" placeholder="Cortes e barba livres no mês"></textarea>
+          <label>Preço Mensal (R$)</label>
+          <input type="number" step="0.01" id="planoPreco" required placeholder="120.00">
+          <button type="submit" class="btn-primary">Adicionar Plano</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>Planos Cadastrados</h3>
+        <div id="listaPlanos">Carregando...</div>
+      </div>
+    </div>
+
+    <!-- TAB CONFIGURAÇÕES -->
+    <div id="tab-config" class="tab-content">
+      <div class="card">
+        <h3 style="margin-bottom: 16px;">Dados da Barbearia</h3>
+        <form id="formConfig">
+          <label>Nome da Barbearia</label>
+          <input type="text" id="cfgNome" required>
+          <label>Slug (endereço web: /b/seu-slug)</label>
+          <input type="text" id="cfgSlug" required>
+          <label>Frase de Destaque</label>
+          <input type="text" id="cfgFrase">
+          <label>URL do Logotipo</label>
+          <input type="url" id="cfgLogotipo">
+          <label>URL da Foto de Capa</label>
+          <input type="url" id="cfgCapa">
+          <label>Cor da Marca (Hex)</label>
+          <input type="color" id="cfgCor" value="#C99A4B">
+          
+          <h4 style="margin: 16px 0 8px 0; font-family: 'Barlow Condensed'; text-transform: uppercase;">Sobre</h4>
+          <label>Título Sobre</label>
+          <input type="text" id="cfgSobreTitulo">
+          <label>Texto Sobre</label>
+          <textarea id="cfgSobreTexto"></textarea>
+          <label>Foto do Ambiente</label>
+          <input type="url" id="cfgSobreFoto">
+
+          <h4 style="margin: 16px 0 8px 0; font-family: 'Barlow Condensed'; text-transform: uppercase;">Contato & Pix</h4>
+          <label>Endereço</label>
+          <input type="text" id="cfgEndereco">
+          <label>Horário (Texto)</label>
+          <input type="text" id="cfgHorarioTexto" placeholder="Seg a Sáb das 09h às 19h">
+          <label>Telefone</label>
+          <input type="text" id="cfgTelefone">
+          <label>WhatsApp (com DDI e DDD)</label>
+          <input type="text" id="cfgWhatsapp" placeholder="5599999999999">
+          <label>Instagram</label>
+          <input type="text" id="cfgInstagram" placeholder="@barbearia">
+          <label>Chave Pix</label>
+          <input type="text" id="cfgPix">
+          
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+            <input type="checkbox" id="cfgDomicilio" style="width: auto; margin: 0;">
+            <label for="cfgDomicilio" style="margin: 0; color: var(--text-main);">Atendimento em Domicílio</label>
+          </div>
+          <label>Taxa de Domicílio (R$)</label>
+          <input type="number" step="0.01" id="cfgTaxaDomicilio" value="0">
+
+          <button type="submit" class="btn-primary" style="margin-top: 16px;">Salvar Alterações</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/painel.js"></script>
+</body>
+</html>
